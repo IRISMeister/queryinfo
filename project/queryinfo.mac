@@ -1,0 +1,80 @@
+ROUTINE queryinfo
+main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
+ Do ##class(%File).CreateDirectoryChain(basefolder)
+
+ #;TuneStatsの出力
+ Do $SYSTEM.SQL.ExportTuneStats(basefolder_"AllStats.xml")
+
+ #;クエリプランの出力
+ Set sql="SELECT * FROM INFORMATION_SCHEMA.STATEMENTS st, INFORMATION_SCHEMA.STATEMENT_LOCATIONS loc where st.Hash=loc.Statement"
+ Set stmt=##class(%SQL.Statement).%New()
+ Set tSC=stmt.%Prepare(sql)
+
+ Set sql2="SELECT * FROM INFORMATION_SCHEMA.STATEMENT_PRIV_OBJECTS WHERE Statements=?"
+ Set stmt2=##class(%SQL.Statement).%New()
+ Set tSC=stmt2.%Prepare(sql2)
+ 
+ Set sql3="SELECT * FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE WHERE VIEW_SCHEMA=? and VIEW_NAME=?"
+ Set stmt3=##class(%SQL.Statement).%New()
+ Set tSC=stmt3.%Prepare(sql3)
+ 
+ Set rs=stmt.%Execute()
+
+ K relnames
+ While(rs.%Next()) {
+	#; CachedQueryに限定
+	If $E(rs.Location,1,7)'="%sqlcq." { Continue }
+		
+	#; 対象を選別
+	#;noop
+	
+	Set statementId=rs.Hash
+	Set outfolder=basefolder_rs.Location
+	Do ##class(%File).CreateDirectoryChain(outfolder)
+	Set oFileQuery=outfolder_"/"_"query.txt"
+	Open oFileQuery:"nws" Use oFileQuery
+	Write rs.Statement,!
+	Close oFileQuery
+	
+	Set oFilePlan=outfolder_"/"_"plan.txt"
+	Open oFilePlan:"nws" Use oFilePlan
+	Set statement=1
+	Set statement(1)=rs.Statement
+	Do $SYSTEM.SQL.ShowPlan(.statement,,showstats,,,,,,,,,verbose)
+	Close oFilePlan
+	
+	Set rs2=stmt2.%Execute(statementId)
+	While(rs2.%Next()) {
+		#;関連するテーブルやビューの取得
+		Set rel=rs2.Relation,reltype=$P(rel,",",1),relname=$P(rel,",",2)
+		#;カタログへのクエリを除外
+		If $E(relname,1,19)="INFORMATION_SCHEMA." { Continue }
+		Set relnames(relname)=reltype
+	}
+ }
+
+ #;比較しやすいよう、関連クラスをUDLで出力する
+ #; DDLで作成されたテーブルを前提とする。よってIncludeやSuperClassの存在は配慮しない。
+ Set outfolder=basefolder_"classes/"
+ Do ##class(%File).CreateDirectoryChain(outfolder)
+ kill outclasses
+ Set tblname="" For {
+	Set tblname=$O(relnames(tblname)) Quit:tblname=""
+	Set cls=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||")).Classname
+	Set outclasses(cls)=""
+	#; Viewの実体クラスを含める
+	If relnames(tblname)=3 {  //VIEW
+		Set rs3=stmt3.%Execute($P(tblname,".",1),$P(tblname,".",2))
+		While(rs3.%Next()) {
+			Set cls=##class(INFORMATION.SCHEMA.TABLES).%OpenId(rs3."TABLE_SCHEMA"_"||"_rs3."TABLE_NAME").Classname
+			Set outclasses(cls)=""
+		}
+	}
+ }
+ 
+ Set cls="" For {
+	Set cls=$O(outclasses(cls)) Quit:cls="" 
+	Do $SYSTEM.OBJ.ExportUDL(cls_".cls",outfolder_"/"_cls_".txt","/recursive=1")
+ }
+  
+}
