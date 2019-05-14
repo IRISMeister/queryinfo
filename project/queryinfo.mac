@@ -1,9 +1,13 @@
 ROUTINE queryinfo
 main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
+ Do ##class(%File).RemoveDirectoryTree(basefolder)
  Do ##class(%File).CreateDirectoryChain(basefolder)
 
  #;TuneStatsの出力
  Do $SYSTEM.SQL.ExportTuneStats(basefolder_"AllStats.xml")
+
+ #;クエリ統計情報の出力
+ Set tSC=##class(%SYS.PTools.StatsSQL).exportStatsSQL(basefolder_"sqlstats.log") 
 
  #;クエリプランの出力
  Set sql="SELECT * FROM INFORMATION_SCHEMA.STATEMENTS st, INFORMATION_SCHEMA.STATEMENT_LOCATIONS loc where st.Hash=loc.Statement"
@@ -42,7 +46,16 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Set statement(1)=rs.Statement
 	Do $SYSTEM.SQL.ShowPlan(.statement,,showstats,,,,,,,,,verbose)
 	Close oFilePlan
+
+	Set oFileStatement=outfolder_"/"_"statement.txt"
+	Do $SYSTEM.SQL.ExportSQLStatement(oFileStatement,rs.Hash)
 	
+	#;もし存在すればクエリキャッシュルーチンを出力
+	Set rn=rs.Location
+	If ##class(%Routine).Exists(rn) {
+		Do $SYSTEM.OBJ.ExportUDL(rn_".int",outfolder_"/"_rn_".txt","/recursive=1")
+	}
+
 	Set rs2=stmt2.%Execute(statementId)
 	While(rs2.%Next()) {
 		#;関連するテーブルやビューの取得
@@ -77,4 +90,29 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Do $SYSTEM.OBJ.ExportUDL(cls_".cls",outfolder_"/"_cls_".txt","/recursive=1")
  }
   
+}
+
+Purge() public {
+	Do PurgeSQLStats()
+	Do PurgeCachedQueries()
+}
+
+EnableSaveCachedQuery(p1=1) public {
+	New $NAMESPACE
+	Set $NAMESPACE="%SYS"
+	Set Obj=##Class(Config.SQL).Open()
+	Set Obj.SaveMAC=p1
+	Set tSC=Obj.%Save()
+	Return tSC
+}
+
+#; SQL実行時統計情報を削除
+PurgeSQLStats() public {
+	Set tSC = ##class(%SYS.PTools.StatsSQL).clearStatsSQL(,,1,1)
+	kill %sqlcontext
+	Return tSC
+}
+#; キャッシュクエリを削除
+PurgeCachedQueries() public {
+	Do $SYSTEM.SQL.Purge()
 }
