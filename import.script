@@ -1,0 +1,5 @@
+SuperUser
+PASSWORD
+zn "USER"
+do ##class(%SYSTEM.OBJ).Load("project/queryinfo.mac","ck")
+halt
