@@ -1,5 +1,5 @@
 SuperUser
 PASSWORD
 zn "USER"
-do ##class(%SYSTEM.OBJ).Load("project/queryinfo.mac","ck")
+do ##class(%SYSTEM.OBJ).Load("PWD/project/queryinfo.mac","ck")
 halt
