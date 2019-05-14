@@ -6,9 +6,9 @@ Developed on IRIS for UNIX (Ubuntu Server LTS for x86-64) 2019.1 (Build 510U) Th
 インスタンス名IRISが起動している事。
 SuperUserのパスワードを知っている事。
 ネームスペースUSERが存在する事。
-> git clone https://github.com/IRISMeister/queryinfo.git
-> cd queryinfo
-> ./load.sh
+\# git clone https://github.com/IRISMeister/queryinfo.git
+\# cd queryinfo
+\# ./load.sh
 Enter SuperUser PASSWORD:[enter password]
 
 Node: master, Instance: IRIS
@@ -24,7 +24,7 @@ Compiling routine : queryinfo.mac
 Load finished successfully.
 
 USER>
->
+\#
 
 実行方法
 USER>D ^queryinfo()
