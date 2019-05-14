@@ -3,7 +3,9 @@
 Developed on IRIS for UNIX (Ubuntu Server LTS for x86-64) 2019.1 (Build 510U) Thu Mar 14 2019 14:24:31 EDT
 
 導入手順
-インスタンス名IRISが起動している事。SuperUserのパスワードを知っている事。
+インスタンス名IRISが起動している事。
+SuperUserのパスワードを知っている事。
+ネームスペースUSERが存在する事。
 # git clone https://github.com/IRISMeister/queryinfo.git
 # cd queryinfo
 # ./load.sh
