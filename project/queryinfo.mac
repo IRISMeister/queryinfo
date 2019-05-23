@@ -8,6 +8,8 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Open oFile:"nws" Use oFile
  Write "Version:"_$$GetVersion(),!
  Write "IsSaveCachedQueryEnabled:"_$$IsSaveCachedQueryEnabled(),!
+ Write "Global Buffers",! 
+ Set gb=$SYSTEM.Util.GlobalBuffers() zw gb
  Close oFile
 
  #;TuneStatsの出力
