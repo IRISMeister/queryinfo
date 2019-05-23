@@ -1,7 +1,14 @@
 ROUTINE queryinfo
 main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
+ If $ZVERSION(1)=2 { Set fdel="\" } Else { Set fdel="/"}
  Do ##class(%File).RemoveDirectoryTree(basefolder)
  Do ##class(%File).CreateDirectoryChain(basefolder)
+
+ Set oFile=basefolder_fdel_"basicinfo.txt"
+ Open oFile:"nws" Use oFile
+ Write "Version:"_$$GetVersion(),!
+ Write "IsSaveCachedQueryEnabled:"_$$IsSaveCachedQueryEnabled(),!
+ Close oFile
 
  #;TuneStatsの出力
  Do $SYSTEM.SQL.ExportTuneStats(basefolder_"AllStats.xml")
@@ -35,25 +42,25 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Set statementId=rs.Hash
 	Set outfolder=basefolder_rs.Location
 	Do ##class(%File).CreateDirectoryChain(outfolder)
-	Set oFileQuery=outfolder_"/"_"query.txt"
+	Set oFileQuery=outfolder_fdel_"query.txt"
 	Open oFileQuery:"nws" Use oFileQuery
 	Write rs.Statement,!
 	Close oFileQuery
 	
-	Set oFilePlan=outfolder_"/"_"plan.txt"
+	Set oFilePlan=outfolder_fdel_"plan.txt"
 	Open oFilePlan:"nws" Use oFilePlan
 	Set statement=1
 	Set statement(1)=rs.Statement
 	Do $SYSTEM.SQL.ShowPlan(.statement,,showstats,,,,,,,,,verbose)
 	Close oFilePlan
 
-	Set oFileStatement=outfolder_"/"_"statement.txt"
+	Set oFileStatement=outfolder_fdel_"statement.txt"
 	Do $SYSTEM.SQL.ExportSQLStatement(oFileStatement,rs.Hash)
 	
 	#;もし存在すればクエリキャッシュルーチンを出力
 	Set rn=rs.Location
 	If ##class(%Routine).Exists(rn) {
-		Do $SYSTEM.OBJ.ExportUDL(rn_".int",outfolder_"/"_rn_".txt","/recursive=1")
+		Do $SYSTEM.OBJ.ExportUDL(rn_".int",outfolder_fdel_rn_".txt","/recursive=1")
 	}
 
 	Set rs2=stmt2.%Execute(statementId)
@@ -68,7 +75,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 
  #;比較しやすいよう、関連クラスをUDLで出力する
  #; DDLで作成されたテーブルを前提とする。よってIncludeやSuperClassの存在は配慮しない。
- Set outfolder=basefolder_"classes/"
+ Set outfolder=basefolder_"classes"_fdel
  Do ##class(%File).CreateDirectoryChain(outfolder)
  kill outclasses
  Set tblname="" For {
@@ -87,7 +94,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  
  Set cls="" For {
 	Set cls=$O(outclasses(cls)) Quit:cls="" 
-	Do $SYSTEM.OBJ.ExportUDL(cls_".cls",outfolder_"/"_cls_".txt","/recursive=1")
+	Do $SYSTEM.OBJ.ExportUDL(cls_".cls",outfolder_fdel_cls_".txt","/recursive=1")
  }
   
 }
@@ -101,11 +108,19 @@ EnableSaveCachedQuery(p1=1) public {
 	New $NAMESPACE
 	Set $NAMESPACE="%SYS"
 	Set Obj=##Class(Config.SQL).Open()
-	Set Obj.SaveMAC=p1
-	Set tSC=Obj.%Save()
+	Set tSC=1
+	If Obj.SaveMAC'=p1 { 
+		Set Obj.SaveMAC=p1
+		Set tSC=Obj.%Save()
+	}
 	Return tSC
 }
-
+IsSaveCachedQueryEnabled() public {
+	New $NAMESPACE
+	Set $NAMESPACE="%SYS"
+	Set Obj=##Class(Config.SQL).Open()
+	Return Obj.SaveMAC
+}
 #; SQL実行時統計情報を削除
 PurgeSQLStats() public {
 	Set tSC = ##class(%SYS.PTools.StatsSQL).clearStatsSQL(,,1,1)
@@ -115,4 +130,7 @@ PurgeSQLStats() public {
 #; キャッシュクエリを削除
 PurgeCachedQueries() public {
 	Do $SYSTEM.SQL.Purge()
+}
+GetVersion() public {
+	Return "0.1"
 }
