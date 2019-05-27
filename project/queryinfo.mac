@@ -70,6 +70,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 		#;関連するテーブルやビューの取得
 		Set rel=rs2.Relation,reltype=$P(rel,",",1),relname=$P(rel,",",2)
 		#;カタログへのクエリを除外
+		If reltype="" { Continue }
 		If $E(relname,1,19)="INFORMATION_SCHEMA." { Continue }
 		Set relnames(relname)=reltype
 	}

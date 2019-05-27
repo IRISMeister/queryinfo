@@ -29,3 +29,6 @@ USER>
 実行方法  
 USER>D ^queryinfo()  
 USER>
+
+sqlstat.log will include records you would see in 'SQL Runtime Statistics' screen.
+See ##class(%SYS.PTools.StatsSQL).ViewStatsSQL() query.
