@@ -10,6 +10,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Write "IsSaveCachedQueryEnabled:"_$$IsSaveCachedQueryEnabled(),!
  Write "Global Buffers",! 
  Set gb=$SYSTEM.Util.GlobalBuffers() zw gb
+ Do $SYSTEM.CPU.Dump()
  Close oFile
 
  #;TuneStatsの出力
