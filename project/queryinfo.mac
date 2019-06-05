@@ -4,7 +4,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Do ##class(%File).RemoveDirectoryTree(basefolder)
  Do ##class(%File).CreateDirectoryChain(basefolder)
 
- Set oFile=basefolder_fdel_"basicinfo.txt"
+ Set oFile=basefolder_"basicinfo.txt"
  Open oFile:"nws" Use oFile
  Write "Version:"_$$GetVersion(),!
  Write "IsSaveCachedQueryEnabled:"_$$IsSaveCachedQueryEnabled(),!
@@ -44,6 +44,17 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	
 	Set statementId=rs.Hash
 	Set outfolder=basefolder_rs.Location
+	#; 同一のCachedQuery内に複数のクエリが含まれる可能性がある
+	If ##class(%File).Exists(outfolder) {
+		Set tmprs=##class(%ResultSet).%New("%File:FileSet")
+		Do tmprs.%Execute(basefolder,rs.Location_"*",,1)
+		While (tmprs.%Next()) {
+			Set name=tmprs.Name
+		}
+		Set seq=$P(name,"_",2)
+		If seq="" { Set seq=1 } Else { Set seq=seq+1 }
+		Set outfolder=outfolder_"_"_seq
+	}
 	Do ##class(%File).CreateDirectoryChain(outfolder)
 	Set oFileQuery=outfolder_fdel_"query.txt"
 	Open oFileQuery:"nws" Use oFileQuery
