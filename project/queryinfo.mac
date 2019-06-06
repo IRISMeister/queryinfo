@@ -44,7 +44,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	If $E(rs.Location,1,7)'="%sqlcq." { Continue }
 	Set statementId=rs.Hash
 		
-	#; 対象を選別
+	#; 対象を選別. INFORMATION_SCHEMA.を除外.
 	Set relationCount=0
 	Set rs2=stmt2.%Execute(statementId)
 	While(rs2.%Next()) {
@@ -59,10 +59,12 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	If relationCount=0 { Continue }
 	
 	Set outfolder=basefolder_rs.Location
-	#; 同一のCachedQuery内に複数のクエリが含まれる可能性がある
+	w outfolder,!
+	#; 同一のCachedQuery内に複数のクエリが含まれる可能性があるので、出力フォルダ名を分ける
 	If ##class(%File).Exists(outfolder) {
 		Set tmprs=##class(%ResultSet).%New("%File:FileSet")
-		Do tmprs.%Execute(basefolder,rs.Location_"*",,1)
+		Do tmprs.%Execute(basefolder,rs.Location_"_*")
+		Set name=""
 		While (tmprs.%Next()) {
 			Set name=tmprs.Name
 		}
@@ -70,6 +72,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 		If seq="" { Set seq=1 } Else { Set seq=seq+1 }
 		Set outfolder=outfolder_"_"_seq
 	}
+	
 	Do ##class(%File).CreateDirectoryChain(outfolder)
 	Set oFileQuery=outfolder_fdel_"query.txt"
 	Open oFileQuery:"nws" Use oFileQuery
@@ -92,15 +95,6 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 		Do $SYSTEM.OBJ.ExportUDL(rn_".int",outfolder_fdel_rn_".txt","/recursive=1")
 	}
 
-	Set rs2=stmt2.%Execute(statementId)
-	While(rs2.%Next()) {
-		#;関連するテーブルやビューの取得
-		Set rel=rs2.Relation,reltype=$P(rel,",",1),relname=$P(rel,",",2)
-		#;カタログへのクエリを除外
-		If reltype="" { Continue }
-		If $E(relname,1,19)="INFORMATION_SCHEMA." { Continue }
-		Set relnames(relname)=reltype
-	}
  }
 
  #;比較しやすいよう、関連クラスをUDLで出力する
@@ -126,7 +120,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Set cls=$O(outclasses(cls)) Quit:cls="" 
 	Do $SYSTEM.OBJ.ExportUDL(cls_".cls",outfolder_fdel_cls_".txt","/recursive=1")
  }
-  
+ Kill %sqlcontext
 }
 
 Purge() public {
@@ -162,5 +156,5 @@ PurgeCachedQueries() public {
 	Do $SYSTEM.SQL.Purge()
 }
 GetVersion() public {
-	Return "0.1"
+	Return "0.2"
 }
