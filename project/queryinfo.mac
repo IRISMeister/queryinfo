@@ -2,10 +2,14 @@ ROUTINE queryinfo
 main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  If $ZVERSION(1)=2 { Set fdel="\" } Else { Set fdel="/"}
  Do ##class(%File).RemoveDirectoryTree(basefolder)
- Do ##class(%File).CreateDirectoryChain(basefolder)
-
+ If '##class(%File).CreateDirectoryChain(basefolder,.return){ 
+	Write "Failed to create directory tree. Status:"_return,! Return 
+ }
+   
  Set oFile=basefolder_"basicinfo.txt"
  Open oFile:"nws" Use oFile
+ Write $ZDATETIME($H),!
+ Write $ZV,!
  Write "Version:"_$$GetVersion(),!
  Write "IsSaveCachedQueryEnabled:"_$$IsSaveCachedQueryEnabled(),!
  Write "Global Buffers",! 
@@ -20,7 +24,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Set tSC=##class(%SYS.PTools.StatsSQL).exportStatsSQL(basefolder_"sqlstats.log") 
 
  #;クエリプランの出力
- Set sql="SELECT * FROM INFORMATION_SCHEMA.STATEMENTS st, INFORMATION_SCHEMA.STATEMENT_LOCATIONS loc where st.Hash=loc.Statement"
+ Set sql="SELECT Hash,Statement,STATEMENT_LOCATIONS->Location AS Location FROM INFORMATION_SCHEMA.STATEMENTS"
  Set stmt=##class(%SQL.Statement).%New()
  Set tSC=stmt.%Prepare(sql)
 
@@ -38,11 +42,22 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  While(rs.%Next()) {
 	#; CachedQueryに限定
 	If $E(rs.Location,1,7)'="%sqlcq." { Continue }
+	Set statementId=rs.Hash
 		
 	#; 対象を選別
-	#;noop
+	Set relationCount=0
+	Set rs2=stmt2.%Execute(statementId)
+	While(rs2.%Next()) {
+		#;関連するテーブルやビューの取得
+		Set rel=rs2.Relation,reltype=$P(rel,",",1),relname=$P(rel,",",2)
+		#;カタログへのクエリを除外
+		If reltype="" { Continue }
+		If $E(relname,1,19)="INFORMATION_SCHEMA." { Continue }
+		Set relationCount=relationCount+1
+		Set relnames(relname)=reltype
+	}
+	If relationCount=0 { Continue }
 	
-	Set statementId=rs.Hash
 	Set outfolder=basefolder_rs.Location
 	#; 同一のCachedQuery内に複数のクエリが含まれる可能性がある
 	If ##class(%File).Exists(outfolder) {
@@ -69,7 +84,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Close oFilePlan
 
 	Set oFileStatement=outfolder_fdel_"statement.txt"
-	Do $SYSTEM.SQL.ExportSQLStatement(oFileStatement,rs.Hash)
+	Do $SYSTEM.SQL.ExportSQLStatement(oFileStatement,statementId)
 	
 	#;もし存在すればクエリキャッシュルーチンを出力
 	Set rn=rs.Location
