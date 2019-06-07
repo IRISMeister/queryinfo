@@ -1,5 +1,7 @@
 ROUTINE queryinfo
 main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
+	///aaaaaa
+	///xxxxx
  If $ZVERSION(1)=2 { Set fdel="\" } Else { Set fdel="/"}
  Do ##class(%File).RemoveDirectoryTree(basefolder)
  If '##class(%File).CreateDirectoryChain(basefolder,.return){ 
