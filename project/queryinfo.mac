@@ -42,6 +42,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  While(rs.%Next()) {
 	#; CachedQueryに限定
 	If $E(rs.Location,1,7)'="%sqlcq." { Continue }
+	If rs.Switch="Runtime" { Continue }
 	Set statementId=rs.Hash
 		
 	#; 対象を選別. INFORMATION_SCHEMA.を除外.
