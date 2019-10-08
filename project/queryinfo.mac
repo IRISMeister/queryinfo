@@ -23,6 +23,9 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  #;クエリ統計情報の出力
  Set tSC=##class(%SYS.PTools.StatsSQL).exportStatsSQL(basefolder_"sqlstats.log") 
 
+ #;time based sql stats
+ Do ..ExportSQLStats(basefolder)
+
  #;クエリプランの出力
  Set sql="SELECT Hash,Statement,STATEMENT_LOCATIONS->Location AS Location FROM INFORMATION_SCHEMA.STATEMENTS"
  Set stmt=##class(%SQL.Statement).%New()
@@ -152,6 +155,33 @@ PurgeSQLStats() public {
 	kill %sqlcontext
 	Return tSC
 }
+
+#;Start ex pButtons
+Start(min=10) public {
+	#; need iostat 
+	New $NAMESPACE
+	Set $NAMESPACE="%SYS"
+	Set profile="by queryinfo "_min_"_minute"
+	set rc=$$addprofile^SystemPerformance(profile,min_" minute only", "1", min*60)
+	set runid=$$literun^SystemPerformance(profile)
+}
+#;time based sql stats( see %SYSTEM.Context.SQL)
+#;This is nothing got to do with %SYS.PTools.StatsSQL.
+ExportSQLStats(basefolder) public {
+	; see teams entry...	
+	Set tSC=$$UpdateSQLStats^%SYS.SQLSRV()
+
+	Set tStatement = ##class(%SQL.Statement).%New()
+	Set sql="SELECT L.Location,S.Statement,  StatCount, StatTotal, StatVariance, StatFirst, StatAverage, StatStdDev FROM INFORMATION_SCHEMA.STATEMENTS S,INFORMATION_SCHEMA.STATEMENT_LOCATIONS L where S.Hash=L.Statement and StatCount is not null"
+	Set tStatus = tStatement.%Prepare(sql)
+	Set tResult = tStatement.%Execute()
+
+	Set file=basefolder_"sqlstatslite.log"
+	o file:"nws" u file
+	Do tResult.%Display()
+	c file
+}
+
 #; キャッシュクエリを削除
 PurgeCachedQueries() public {
 	Do $SYSTEM.SQL.Purge()
