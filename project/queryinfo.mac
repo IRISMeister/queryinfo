@@ -108,8 +108,12 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  kill outclasses
  Set tblname="" For {
 	Set tblname=$O(relnames(tblname)) Quit:tblname=""
-	Set cls=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||")).Classname
-	Set outclasses(cls)=""
+	#; Shard internal table doesn't have entry here.
+	Set ref=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||"))
+	if ref'="" { 
+		#;Set cls=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||")).Classname
+		Set outclasses(cls.Classname)=""
+	}
 	#; Viewの実体クラスを含める
 	If relnames(tblname)=3 {  //VIEW
 		Set rs3=stmt3.%Execute($P(tblname,".",1),$P(tblname,".",2))
