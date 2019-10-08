@@ -24,7 +24,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Set tSC=##class(%SYS.PTools.StatsSQL).exportStatsSQL(basefolder_"sqlstats.log") 
 
  #;time based sql stats
- Do ..ExportSQLStats(basefolder)
+ Do ExportSQLStats(basefolder)
 
  #;クエリプランの出力
  Set sql="SELECT Hash,Statement,STATEMENT_LOCATIONS->Location AS Location FROM INFORMATION_SCHEMA.STATEMENTS"
