@@ -27,7 +27,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
  Do ExportSQLStats(basefolder)
 
  #;クエリプランの出力
- Set sql="SELECT Hash,Statement,STATEMENT_LOCATIONS->Location AS Location FROM INFORMATION_SCHEMA.STATEMENTS"
+ Set sql="SELECT Switch,Hash,Statement,STATEMENT_LOCATIONS->Location AS Location FROM INFORMATION_SCHEMA.STATEMENTS"
  Set stmt=##class(%SQL.Statement).%New()
  Set tSC=stmt.%Prepare(sql)
 
