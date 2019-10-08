@@ -161,9 +161,11 @@ Start(min=10) public {
 	#; need iostat 
 	New $NAMESPACE
 	Set $NAMESPACE="%SYS"
-	Set profile="by queryinfo "_min_"_minute"
+	Set profile=min_"_minute"  ;no spaces are allowed
 	set rc=$$addprofile^SystemPerformance(profile,min_" minute only", "1", min*60)
 	set runid=$$literun^SystemPerformance(profile)
+	w runid,!
+	Return runid
 }
 #;time based sql stats( see %SYSTEM.Context.SQL)
 #;This is nothing got to do with %SYS.PTools.StatsSQL.
