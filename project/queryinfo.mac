@@ -112,7 +112,7 @@ main(basefolder="/var/tmp/query/",showstats=1,verbose=1) public {
 	Set ref=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||"))
 	if ref'="" { 
 		#;Set cls=##class(INFORMATION.SCHEMA.TABLES).%OpenId($REPLACE(tblname,".","||")).Classname
-		Set outclasses(cls.Classname)=""
+		Set outclasses(ref.Classname)=""
 	}
 	#; Viewの実体クラスを含める
 	If relnames(tblname)=3 {  //VIEW
