@@ -163,7 +163,7 @@ Start(min=10) public {
 	Set $NAMESPACE="%SYS"
 	Set profile=min_"_minute"  ;no spaces are allowed
 	set rc=$$addprofile^SystemPerformance(profile,min_" minute only", "1", min*60)
-	set runid=$$literun^SystemPerformance(profile)
+	set runid=$$run^SystemPerformance(profile)
 	w runid,!
 	Return runid
 }
