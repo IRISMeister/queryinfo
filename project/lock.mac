@@ -1,0 +1,40 @@
+ROUTINE lock
+	; poCN.Cdun.1 SelfProduct
+	; poCN.BYNM.1 CustProduct
+	; poCN.BuW3.1 OrderTable
+dump() public {
+	Set rs=##class(%Library.ResultSet).%New("%SYS.LockQuery:Detail")
+	S idx=1
+	Do rs.Execute("")
+	;Do rs.%Display()
+	Set tab=$C(9)
+	While rs.Next() {
+		Set lock=rs.LockString,waiter=rs.WaiterPID
+      	Continue:$E(lock,1,5)'="^poCN"
+		If waiter'="" {
+			Set waitercnt=$L(waiter,",")
+		} Else { Set waitercnt=0 }
+		w idx,tab,$ZDATETIME($H,3),tab,lock,tab,rs.Owner,tab,waitercnt,!
+		s idx=idx+1
+	}
+}
+oneline(cnt=10) public {
+	Set rs=##class(%Library.ResultSet).%New("%SYS.LockQuery:Detail")
+	Set tab=$C(9)
+	S idx=1
+	For i=1:1:cnt {
+		Do rs.Execute("")
+		kill result
+		While rs.Next() {
+			Set lock=rs.LockString,waiter=rs.WaiterPID
+	      	Continue:$E(lock,1,5)'="^poCN"
+			If waiter'="" {
+				Set waitercnt=$L(waiter,",")
+			} Else { Set waitercnt=0 }
+			Set result(lock)=waitercnt
+		}
+		w idx,tab,$ZDATETIME($H,3),tab,$G(result("^poCN.Cdun.1(1)"),0),tab,$G(result("^poCN.Cdun.1(2)"),0),tab,$G(result("^poCN.Cdun.1(4)"),0),tab,$G(result("^poCN.Cdun.1(4)"),0),!
+		s idx=idx+1
+		h 1
+	}
+}
