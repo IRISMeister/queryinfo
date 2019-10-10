@@ -1,4 +1,5 @@
 SuperUser
 PASSWORD
 do ##class(%SYSTEM.OBJ).Load("PWD/project/queryinfo.mac","ck")
+do ##class(%SYSTEM.OBJ).Load("PWD/project/lock.mac","ck")
 halt
