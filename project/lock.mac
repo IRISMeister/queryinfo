@@ -2,7 +2,7 @@ ROUTINE lock
 	; poCN.Cdun.1 SelfProduct
 	; poCN.BYNM.1 CustProduct
 	; poCN.BuW3.1 OrderTable
-dump() public {
+dump(filter="^poCN") public {
 	Set rs=##class(%Library.ResultSet).%New("%SYS.LockQuery:Detail")
 	S idx=1
 	Do rs.Execute("")
@@ -10,7 +10,7 @@ dump() public {
 	Set tab=$C(9)
 	While rs.Next() {
 		Set lock=rs.LockString,waiter=rs.WaiterPID
-      	Continue:$E(lock,1,5)'="^poCN"
+      	Continue:$E(lock,1,$L(filter))'=filter
 		If waiter'="" {
 			Set waitercnt=$L(waiter,",")
 		} Else { Set waitercnt=0 }
