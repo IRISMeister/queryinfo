@@ -12,3 +12,7 @@ fi
 echo "Will load this program into ["$namespace"] namespace of ["$instance"] instance."
 echo -n "Enter SuperUser PASSWORD: "; stty -echo; read passwd; stty echo; echo
 cat load.script | sed "s|PASSWORD|$passwd|g" | sed "s|PWD|$(pwd)|g" | iris session $instance -U $namespace
+
+if ! (type iostat > /dev/null 2>&1); then
+  echo "iostat is not installed!"
+fi
