@@ -160,17 +160,6 @@ PurgeSQLStats() public {
 	Return tSC
 }
 
-#;Start ex pButtons
-Start(min=10) public {
-	#; need iostat 
-	New $NAMESPACE
-	Set $NAMESPACE="%SYS"
-	Set profile=min_"_minute"  ;no spaces are allowed
-	set rc=$$addprofile^SystemPerformance(profile,min_" minute only", "1", min*60)
-	set runid=$$run^SystemPerformance(profile)
-	w runid,!
-	Return runid
-}
 #;time based sql stats( see %SYSTEM.Context.SQL)
 #;This is nothing got to do with %SYS.PTools.StatsSQL.
 ExportSQLStats(basefolder) public {
@@ -192,6 +181,24 @@ ExportSQLStats(basefolder) public {
 PurgeCachedQueries() public {
 	Do $SYSTEM.SQL.Purge()
 }
+
+#;Start ex pButtons
+sm(min=10) public {
+	#; need iostat 
+	New $NAMESPACE
+	Set $NAMESPACE="%SYS"
+	Set profile=min_"_minute"  ;no spaces are allowed
+	set rc=$$addprofile^SystemPerformance(profile,min_" minute only", "1", min*60)
+	set runid=$$run^SystemPerformance(profile)
+	w runid,!
+	Return runid
+}
+lm(runid) public {
+	New $NAMESPACE
+	Set $NAMESPACE="%SYS"
+	W $$waittime^SystemPerformance(profile)
+}
+
 GetVersion() public {
-	Return "0.2"
+	Return "0.3"
 }
